@@ -3,13 +3,16 @@ package br.com.agenciaviagens.agenciaviagens.controller;
 import br.com.agenciaviagens.agenciaviagens.error.IdNaoEncontradoException;
 import br.com.agenciaviagens.agenciaviagens.model.Viagens;
 import br.com.agenciaviagens.agenciaviagens.repository.ViagensRepository;
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 @RequestMapping("/viagens")
 public class ViagensController {
 
@@ -32,19 +35,22 @@ public class ViagensController {
         return new ResponseEntity<>(viagensDAO.findByLocalContainingIgnoreCase(local), HttpStatus.OK);
     }
 
+    @Transactional(rollbackOn = Exception.class)
     @PostMapping
-    public ResponseEntity<?> postarNovaViagem(@RequestBody Viagens viagem){
+    public ResponseEntity<?> postarNovaViagem(@Valid @RequestBody Viagens viagem){
         return new ResponseEntity<>(viagensDAO.save(viagem), HttpStatus.CREATED);
     }
 
     @PutMapping
-    public ResponseEntity<?> atualizarViagem(@RequestBody Viagens viagem){
+    public ResponseEntity<?> atualizarViagem(@Valid @RequestBody Viagens viagem){
         verificarSeIdExiste(viagem.getId());
         viagensDAO.save(viagem);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deletarViagem(@PathVariable("id") Long id){
         verificarSeIdExiste(id);
         viagensDAO.deleteById(id);
